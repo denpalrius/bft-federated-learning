@@ -1,2 +1,3 @@
 # Tendermint data and config
-tendermint_data/
+tendermint_data
+__pycache__
