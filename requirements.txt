@@ -1,0 +1,25 @@
+# Data processing
+numpy
+matplotlib
+
+# Deep Learning
+torch
+torchvision
+
+tensorflow
+tensorflow-metal
+tf-keras
+tensorboard
+
+# Flower
+flwr
+flwr[simulation]
+flwr-datasets[vision]
+
+# RPC
+grpcio
+grpcio-tools
+protobuf
+
+# General
+tqdm
