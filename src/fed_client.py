@@ -1,10 +1,7 @@
 from typing import Dict, List, Tuple
-
 import numpy as np
 from torch.utils.data import DataLoader
-
 from flwr.client import ClientApp, NumPyClient
-
 from dataloader import DatasetLoader
 from model import CNNClassifier
 from config import BaseConfig
@@ -48,11 +45,13 @@ class FederatedClient:
         # Read the node_config to fetch data partition associated to this node
         partition_id = context.node_config["partition-id"]
         num_partitions = context.node_config["num-partitions"]
+        
+        print("Number of partitions: ", num_partitions)
 
         model = CNNClassifier()
-        trainer = ModelTrainer(model, self.config.device)
+        trainer = ModelTrainer(model, self.config)
         
-        datasetloader = DatasetLoader(config=self.config, num_partitions=num_partitions)
+        datasetloader = DatasetLoader(config=self.config)
         trainloader, valloader, _ = datasetloader.load_datasets(partition_id)
         
         # TODO: Check use of validation loader

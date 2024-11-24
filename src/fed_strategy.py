@@ -6,6 +6,7 @@ from flwr.common import ndarrays_to_parameters
 
 from config import BaseConfig
 from model import CNNClassifier
+from fed_evaluation import ServerEvaluator
 from train import ModelTrainer
 
 class StrategyConfig:    
@@ -39,6 +40,8 @@ class FederatedStrategy:
             "FedProx": FedProx,
         }
 
+        evaluator = ServerEvaluator(BaseConfig())
+        
         if strategy_name not in strategies:
             raise ValueError(f"Unknown strategy: {strategy_name}")
 
@@ -51,6 +54,7 @@ class FederatedStrategy:
             min_evaluate_clients=config.min_evaluate_clients,
             min_available_clients=config.min_available_clients,
             initial_parameters=config.initial_parameters,
+            evaluate_fn=evaluator.evaluate,
             **config.extra_params
         )
         

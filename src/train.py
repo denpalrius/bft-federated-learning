@@ -11,8 +11,8 @@ from config import BaseConfig
 
 class ModelTrainer:
     def __init__(self, model: nn.Module, config: BaseConfig):
-        self.model = model.to(config.device)
         self.device = config.device
+        self.model = model.to(self.device)
 
     def get_parameters(self) -> List[np.ndarray]:
         return [val.cpu().numpy() for _, val in self.model.state_dict().items()]

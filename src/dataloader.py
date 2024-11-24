@@ -11,9 +11,9 @@ from config import BaseConfig
 # - Use `load_datasets` with different partition numbers.
 
 class DatasetLoader:
-    def __init__(self, config: BaseConfig, num_partitions: int = 10):
+    def __init__(self, config: BaseConfig):
         self.dataset = config.dataset
-        self.num_partitions = num_partitions
+        self.num_partitions = config.num_partitions
         self.batch_size = config.batch_size
         self.transforms = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
@@ -54,7 +54,7 @@ class DatasetLoader:
 if __name__ == "__main__":
     config = BaseConfig()
     
-    loader = DatasetLoader(config=config, num_partitions=10)
+    loader = DatasetLoader(config=config)
     trainloader, valloader, testloader = loader.load_datasets(0)
     
     print(f"Train: {len(trainloader.dataset)} samples")

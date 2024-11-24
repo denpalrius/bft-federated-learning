@@ -1,3 +1,6 @@
 # Tendermint data and config
 tendermint_data
 __pycache__
+
+# Logs
+output.log

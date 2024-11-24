@@ -30,3 +30,4 @@ class BaseConfig:
     # Dataset
     dataset: str = "cifar10"
     num_partitions: int = 10
+    num_rounds: int = 3

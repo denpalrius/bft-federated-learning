@@ -1,4 +1,5 @@
-from config import BaseConfig
+from flwr.server import ServerApp
+from flwr.client import ClientApp
 from flwr.simulation import run_simulation
 from config import BaseConfig
 
@@ -8,8 +9,8 @@ class SimulationRunner:
 
     def __init__(
         self,
-        client_app,
-        server_app,
+        client_app : ClientApp,
+        server_app: ServerApp,
         config: BaseConfig,
     ):
         self.client_app = client_app
