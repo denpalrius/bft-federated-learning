@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  node_1:
+    build: .
+    container_name: node_1
+    ports:
+      - "5001:5000"
+    environment:
+      - NODE_ID=1
+    networks:
+      - hotstuff_network
+
+  node_2:
+    build: .
+    container_name: node_2
+    ports:
+      - "5002:5000"
+    environment:
+      - NODE_ID=2
+    networks:
+      - hotstuff_network
+
+  node_3:
+    build: .
+    container_name: node_3
+    ports:
+      - "5003:5000"
+    environment:
+      - NODE_ID=3
+    networks:
+      - hotstuff_network
+
+networks:
+  hotstuff_network:
+    driver: bridge

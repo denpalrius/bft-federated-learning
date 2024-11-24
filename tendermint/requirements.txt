@@ -1,0 +1,17 @@
+# Web requests
+requests
+
+# Data analysis and visualization
+scikit-learn
+numpy
+matplotlib
+
+# Deep learning
+torch
+torchvision
+
+# Tendermint
+abci
+protobuf
+protobuf==3.2.0 # Required for tendermint. Do not upgrade even if it is too old
+

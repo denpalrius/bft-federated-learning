@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package hotstuff;
+
+// Define the proposal message
+message Proposal {
+    int32 block_id = 1;
+    string data = 2;
+}
+
+// Define the block response message
+message BlockResponse {
+    bool success = 1;
+}
+
+// Define the vote message
+message Vote {
+    int32 block_id = 1;
+    bool vote = 2;
+}
+
+// Define the vote response message
+message VoteResponse {
+    bool success = 1;
+}
+
+// Define the HotStuff service
+service HotStuff {
+    rpc ProposeBlock (Proposal) returns (BlockResponse);
+    rpc VoteOnBlock (Vote) returns (VoteResponse);
+}

@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  tendermint:
+    build:
+      context: ./tendermint
+      dockerfile: Dockerfile
+    container_name: tendermint
+    ports:
+      - "26656:26656"  # Tendermint P2P
+      - "26657:26657"  # Tendermint RPC
+      - "26658:26658"  # ABCI communication
+    volumes:
+      - ./tendermint/tendermint_data:/tendermint
+    command:
+      - "node"
+    environment:
+      - TMHOME=/tendermint
+      - TENDERMINT_LOG_LEVEL=warn
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:26657/status"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  
+  # node1:
+  #   build:
+  #     context: ./node
+  #     dockerfile: Dockerfile
+  #   container_name: node1
+  #   environment:
+  #     - NODE_ID=node1
+  #     - TENDERMINT_PORT=26658
+  #   depends_on:
+  #     - tendermint
+  #   ports:
+  #     - "50051:50051"
+  
+  # node2:
+  #   build:
+  #     context: ./node
+  #     dockerfile: Dockerfile
+  #   container_name: node2
+  #   environment:
+  #     - NODE_ID=node2
+  #     - TENDERMINT_PORT=26658
+  #   depends_on:
+  #     - tendermint
+  #   ports:
+  #     - "50052:50051"
+
+  # monitor:
+  #   build:
+  #     context: ./streamlit
+  #     dockerfile: Dockerfile
+  #   container_name: monitor
+  #   depends_on:
+  #     - node1
+  #     - node2
+  #   ports:
+  #     - "8501:8501"

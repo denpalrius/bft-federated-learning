@@ -1,0 +1,18 @@
+# Web requests
+requests
+
+# Data analysis and visualization
+scikit-learn
+numpy
+matplotlib
+
+# Deep learning
+
+
+# Tendermint
+abci
+protobuf
+
+# GRPC
+grpcio
+grpcio-tools
