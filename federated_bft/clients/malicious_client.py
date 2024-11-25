@@ -1,9 +1,12 @@
+import sys, os
+base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(base_path)
+
 from typing import Dict, List, Tuple
 import numpy as np
-import torch
 from torch.utils.data import DataLoader
 from flwr.client import NumPyClient
-from fed.train import ModelTrainer
+from nets.train import ModelTrainer
 
 class MaliciousClient(NumPyClient):
     """Implementation of a malicious client that can perform various attacks."""
@@ -53,6 +56,7 @@ class MaliciousClient(NumPyClient):
     def fit(self, parameters: List[np.ndarray], config: Dict) -> Tuple[List[np.ndarray], int, Dict]:
         """Train the model and return poisoned parameters."""
         print(f"[Malicious Client {self.partition_id}] fit, config: {config}")
+        
         self.trainer.set_parameters(parameters)
         self.trainer.train(self.trainloader, epochs=1)
         
@@ -65,8 +69,10 @@ class MaliciousClient(NumPyClient):
     def evaluate(self, parameters: List[np.ndarray], config: Dict) -> Tuple[float, int, Dict]:
         """Evaluate the model and return metrics."""
         print(f"[Malicious Client {self.partition_id}] evaluate, config: {config}")
+        
         self.trainer.set_parameters(parameters)
         loss, accuracy = self.trainer.test(self.valloader)
+        
         return float(loss), len(self.valloader), {
             "accuracy": float(accuracy),
             "is_malicious": True

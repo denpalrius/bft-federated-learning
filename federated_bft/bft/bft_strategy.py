@@ -9,7 +9,8 @@ from flwr.common import (
 )
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy import FedAvg
-
+from utils.path import add_base_path
+add_base_path(__file__)
 
 class BFTFedAvg(FedAvg):
     """Byzantine Fault Tolerant Federated Averaging Strategy."""

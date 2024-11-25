@@ -1,3 +1,5 @@
+from utils.path import add_base_path
+
 from dataclasses import dataclass
 from typing import Callable, List
 import os
@@ -8,13 +10,14 @@ import torchvision
 from torchvision import transforms
 import flwr as fl
 from flwr.client import ClientApp, NumPyClient
-from client_federated import FederatedClient
-from client_malicious import MaliciousClient
-from fed.model import CNNClassifier
-from config_base import BaseConfig
-from config_sim import BFTSimulationConfig
-from bft_simulator import BFTSimulator
-from train import ModelTrainer
+from clients.federated_client import FederatedClient
+from clients.malicious_client import MaliciousClient
+from nets.model import CNNClassifier
+from utils.base_config import BaseConfig
+from utils.bft_simulation_config import BFTSimulationConfig
+from bft.bft_simulator import BFTSimulator
+
+add_base_path(__file__)
 
 
 def run_experiments(
@@ -26,7 +29,10 @@ def run_experiments(
     """Run experiments with different BFT methods."""
     results = []
 
-    print(f"Running experiments for {experiment_name}...")
+    print(f"Running experiments for {experiment_name}")
+    
+    # TODO: Make number of clients dynamic between 20 and 100
+    # Simulate clients dropping out randomly
     
     for bft_method in base_config.bft_methods:
         sim_config = BFTSimulationConfig(
@@ -39,13 +45,13 @@ def run_experiments(
 
         simulator = BFTSimulator(base_config, sim_config)
         result = simulator.run()
-        results.append(
-            {
-                "method": bft_method,
-                "accuracy": result["accuracy"],
-                "loss": result["loss"],
-            }
-        )
+        # results.append(
+        #     {
+        #         "method": bft_method,
+        #         "accuracy": result["accuracy"],
+        #         "loss": result["loss"],
+        #     }
+        # )
 
     return results
 
@@ -59,14 +65,14 @@ if __name__ == "__main__":
             ]
         )
         return torchvision.datasets.CIFAR10(
-            root="./data", train=True, download=True, transform=transform
+            root="../data", train=True, download=True, transform=transform
         )
 
     def get_simple_cnn() -> torch.nn.Module:
         return CNNClassifier()
 
     results = run_experiments(
-        experiment_name="cifar10_bft_experiment",
+        experiment_name="cifar10_bft",
         base_config=BaseConfig(),
         dataset_fn=get_cifar10,
         model_fn=get_simple_cnn,

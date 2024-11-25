@@ -1,3 +1,4 @@
+from utils.path import add_base_path
 import json
 import os
 from typing import Dict, List
@@ -5,10 +6,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 
+add_base_path(__file__)
+
 class PerformanceEvaluator:
     """Tracks and saves performance metrics for FL experiments."""
     
-    def __init__(self, output_dir: str = "results"):
+    def __init__(self, output_dir: str = "../results"):
         self.output_dir = output_dir
         self.metrics: Dict[str, List] = {
             "rounds": [],

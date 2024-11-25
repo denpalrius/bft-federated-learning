@@ -4,15 +4,15 @@ from torch.utils.data import DataLoader
 from typing import List
 import numpy as np
 from collections import OrderedDict
-from dataset_loader import DatasetLoader
-from model import CNNClassifier
-from config_base import BaseConfig
+from utils.base_config import BaseConfig
+from utils.path import add_base_path
+add_base_path(__file__)
 
 
 class ModelTrainer:
-    def __init__(self, model: nn.Module, config: BaseConfig):
-        self.device = config.device
-        self.model = model.to(self.device)
+    def __init__(self, model: nn.Module, device: torch.device):
+        self.device = device
+        self.model = model.to(device)
 
     def get_parameters(self) -> List[np.ndarray]:
         return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
@@ -24,7 +24,7 @@ class ModelTrainer:
 
     def train(self, trainloader: DataLoader, epochs: int):
         print(f"\nTraining model on {self.device}...")
-        
+
         # TODO: Check use of validation loader
 
         criterion = nn.CrossEntropyLoss()
@@ -50,12 +50,14 @@ class ModelTrainer:
 
             epoch_loss /= len(trainloader)
             epoch_acc = correct / total
-            print(f"Epoch {epoch + 1}: train loss {epoch_loss:.4f}, accuracy {epoch_acc:.4f}")
-        
+            print(
+                f"Epoch {epoch + 1}: train loss {epoch_loss:.4f}, accuracy {epoch_acc:.4f}"
+            )
+
         print("Training complete")
-        
+
     def test(self, testloader: DataLoader):
-        print('\nEvaluating the model on the test set')
+        print("\nEvaluating the model on the test set")
 
         criterion = nn.CrossEntropyLoss()
         correct, total, loss = 0, 0, 0.0
@@ -75,19 +77,5 @@ class ModelTrainer:
         loss /= len(testloader)
         accuracy = correct / total
         print(f"Test loss: {loss:.4f}, accuracy: {accuracy:.4f}")
-        
+
         return loss, accuracy
-
-if __name__ == "__main__":
-    config = BaseConfig()
-    model = CNNClassifier()
-    trainer = ModelTrainer(model, config)
-
-    datasetloader = DatasetLoader(config=config, num_partitions=10)
-    trainloader, _, testloader = datasetloader.load_datasets(0)
-    
-    trainer.train(trainloader, epochs=10)
-    trainer.test(testloader)
-    
-    
-

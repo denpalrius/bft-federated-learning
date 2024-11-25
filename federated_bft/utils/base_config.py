@@ -1,7 +1,10 @@
+from utils.path import add_base_path
 from typing import List
 import torch
 import flwr
 from dataclasses import dataclass, field
+
+add_base_path(__file__)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Flower: {flwr.__version__} / PyTorch {torch.__version__}")
@@ -39,7 +42,6 @@ class BaseConfig:
     num_malicious: int = 2
     bft_methods: List[str] = field(default_factory=lambda: ["krum", "trimmed_mean", "median"])
     bft_method: str = "krum"
-    attack_types: List[str] = field(default_factory=lambda: ["sign_flip", "gaussian_noise", "constant_bias", "zero_update"])
 
     # BFT Strategy
     threshold: float = 0.5
