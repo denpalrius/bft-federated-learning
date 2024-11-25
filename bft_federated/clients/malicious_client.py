@@ -1,12 +1,9 @@
-import sys, os
-base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(base_path)
-
 from typing import Dict, List, Tuple
 import numpy as np
 from torch.utils.data import DataLoader
 from flwr.client import NumPyClient
 from nets.train import ModelTrainer
+
 
 class MaliciousClient(NumPyClient):
     """Implementation of a malicious client that can perform various attacks."""

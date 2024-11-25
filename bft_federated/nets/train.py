@@ -5,8 +5,6 @@ from typing import List
 import numpy as np
 from collections import OrderedDict
 from utils.base_config import BaseConfig
-from utils.path import add_base_path
-add_base_path(__file__)
 
 
 class ModelTrainer:

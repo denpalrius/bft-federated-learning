@@ -1,10 +1,8 @@
-from utils.path import add_base_path
 from typing import List
 import torch
 import flwr
 from dataclasses import dataclass, field
 
-add_base_path(__file__)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Flower: {flwr.__version__} / PyTorch {torch.__version__}")

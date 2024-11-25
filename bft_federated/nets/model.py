@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils.path import add_base_path
-add_base_path(__file__)
 
 class CNNClassifier(nn.Module):
     def __init__(self) -> None:

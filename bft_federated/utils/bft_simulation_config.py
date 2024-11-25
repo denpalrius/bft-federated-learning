@@ -1,12 +1,9 @@
-from utils.path import add_base_path
 from dataclasses import dataclass, field
 from typing import Callable, List
 import os
 import torch
 from torch.utils.data import Dataset
 from utils.base_config import BaseConfig
-
-add_base_path(__file__)
 
 
 @dataclass

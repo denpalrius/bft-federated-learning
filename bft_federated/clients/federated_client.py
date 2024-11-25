@@ -1,6 +1,3 @@
-from utils.path import add_base_path
-add_base_path(__file__)
-
 from typing import List
 import numpy as np
 from flwr.client import NumPyClient

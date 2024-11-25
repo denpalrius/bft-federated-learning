@@ -71,14 +71,16 @@ if __name__ == "__main__":
     def get_simple_cnn() -> torch.nn.Module:
         return CNNClassifier()
 
-    results = run_experiments(
+    results_exp_1 = run_experiments(
         experiment_name="cifar10_bft",
         base_config=BaseConfig(),
         dataset_fn=get_cifar10,
         model_fn=get_simple_cnn,
     )
 
-    # for res in results:
-    #     print(f"\nMethod: {res['method']}")
-    #     print(f"Final accuracy: {res['accuracy']:.4f}")
-    #     print(f"Final loss: {res['loss']:.4f}")
+    for res in results_exp_1:
+        print(f"\nMethod: {res['method']}")
+        print(f"Final accuracy: {res['accuracy']:.4f}")
+        print(f"Final loss: {res['loss']:.4f}")
+
+    # TODO: Add more experiments

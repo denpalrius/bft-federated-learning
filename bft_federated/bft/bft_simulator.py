@@ -1,6 +1,3 @@
-from utils.path import add_base_path
-add_base_path(__file__)
-
 from typing import List
 import torch
 from torch.utils.data import DataLoader, random_split
@@ -75,18 +72,22 @@ class BFTSimulator:
         clients = self.create_clients(client_datasets)
         strategy = self.create_strategy()
 
+        def client_fn() -> List[fl.client.Client]:
+            return clients
+        
+            
         print(f'Simulation config: {self.sim_config}')
         
-        # results = fl.simulation.start_simulation(
-        #     clients=clients,
-        #     num_rounds=self.sim_config.num_rounds,
-        #     strategy=strategy,
-        # )
+        results = fl.simulation.start_simulation(
+            client_fn=client_fn,
+            num_clients=self.sim_config.num_clients,
+            strategy=strategy,
+        )
 
-        # return {
-        #     "accuracy": results.get("accuracy", 0.0),
-        #     "loss": results.get("loss", 0.0),
-        # }
+        return {
+            "accuracy": results.get("accuracy", 0.0),
+            "loss": results.get("loss", 0.0),
+        }
 
 
 
