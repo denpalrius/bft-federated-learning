@@ -1,6 +1,6 @@
 import argparse
 import logging
-from config_base import BaseConfig
+from base_config import BaseConfig
 from flwr.client import ClientApp
 from flwr.common import ndarrays_to_parameters
 from fed_client import FederatedClient

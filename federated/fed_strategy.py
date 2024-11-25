@@ -4,7 +4,7 @@ from flwr.common import Parameters
 from flwr.server.strategy import FedAvg, FedAdagrad, FedTrimmedAvg, FedProx
 from flwr.common import ndarrays_to_parameters
 
-from config_base import BaseConfig
+from base_config import BaseConfig
 from model import CNNClassifier
 from server_evaluator import ServerEvaluator
 from train import ModelTrainer

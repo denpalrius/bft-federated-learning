@@ -6,7 +6,7 @@ import numpy as np
 from collections import OrderedDict
 from dataset_loader import DatasetLoader
 from model import CNNClassifier
-from config_base import BaseConfig
+from base_config import BaseConfig
 
 
 class ModelTrainer:

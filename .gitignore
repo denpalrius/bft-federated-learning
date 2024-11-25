@@ -8,5 +8,7 @@ output.log
 # Datasets
 data/**
 
-# Experiment runs
+# Experiment runs and results
 tst/**
+federated/results/**
+federated_bft/results/**

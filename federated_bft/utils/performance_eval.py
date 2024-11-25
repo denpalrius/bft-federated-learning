@@ -11,7 +11,7 @@ add_base_path(__file__)
 class PerformanceEvaluator:
     """Tracks and saves performance metrics for FL experiments."""
     
-    def __init__(self, output_dir: str = "../results"):
+    def __init__(self, output_dir: str = "results"):
         self.output_dir = output_dir
         self.metrics: Dict[str, List] = {
             "rounds": [],

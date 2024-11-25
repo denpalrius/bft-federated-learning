@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 from flwr.client import ClientApp, NumPyClient
 from dataset_loader import DatasetLoader
 from model import CNNClassifier
-from config_base import BaseConfig
+from base_config import BaseConfig
 from train import ModelTrainer
 
 
