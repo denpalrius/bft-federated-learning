@@ -1,15 +1,15 @@
 import argparse
 import logging
-from config import BaseConfig
+from config_base import BaseConfig
 from flwr.client import ClientApp
 from flwr.common import ndarrays_to_parameters
+from fed_client import FederatedClient
 from model import CNNClassifier
 from train import ModelTrainer
 from fed_strategy import FederatedStrategy, StrategyConfig
-from fed_client import FederatedClient
 from fed_server import FederatedServer
-from dataloader import DatasetLoader
-from fed_simulator import SimulationRunner
+from dataset_loader import DatasetLoader
+from simulator import SimulationRunner
 
 
 def simulate(epochs: int):

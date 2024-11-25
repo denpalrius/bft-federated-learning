@@ -1,7 +1,7 @@
 from flwr.server import ServerApp
 from flwr.client import ClientApp
 from flwr.simulation import run_simulation
-from config import BaseConfig
+from config_base import BaseConfig
 
 
 class SimulationRunner:

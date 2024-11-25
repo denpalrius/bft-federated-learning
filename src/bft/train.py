@@ -4,9 +4,9 @@ from torch.utils.data import DataLoader
 from typing import List
 import numpy as np
 from collections import OrderedDict
-from dataloader import DatasetLoader
+from dataset_loader import DatasetLoader
 from model import CNNClassifier
-from config import BaseConfig
+from config_base import BaseConfig
 
 
 class ModelTrainer:

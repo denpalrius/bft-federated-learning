@@ -1,7 +1,7 @@
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from flwr_datasets import FederatedDataset
-from config import BaseConfig
+from config_base import BaseConfig
 
 
 # - Load CIFAR-10 training and test sets.

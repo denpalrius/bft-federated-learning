@@ -1,3 +1,4 @@
+from typing import List
 import torch
 import flwr
 from dataclasses import dataclass, field
@@ -30,4 +31,5 @@ class BaseConfig:
     # Dataset
     dataset: str = "cifar10"
     num_partitions: int = 10
-    num_rounds: int = 3
+    num_clients: int = 10
+    num_rounds: int = 3 # Number of rounds to simulate

@@ -3,7 +3,7 @@ from flwr.common import ndarrays_to_parameters, Parameters
 from flwr.server.strategy import Strategy
 from flwr.common import Context
 
-from config import BaseConfig
+from config_base import BaseConfig
 from model import CNNClassifier
 from train import ModelTrainer
 from fed_strategy import FederatedStrategy, StrategyConfig

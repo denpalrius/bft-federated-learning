@@ -1,8 +1,8 @@
 from typing import Dict, Optional, Tuple
 from flwr.common import NDArrays, Scalar
-from dataloader import DatasetLoader
+from dataset_loader import DatasetLoader
 from model import CNNClassifier
-from config import BaseConfig
+from config_base import BaseConfig
 from train import ModelTrainer
 
 
@@ -20,14 +20,12 @@ class ServerEvaluator:
         Evaluate the model after each federated round using test data.
         """
 
-        print(f'Base config: {self.base_config}')
+        # print(f'Base config: {self.base_config}')
         
-        trainer = ModelTrainer(CNNClassifier(), self.base_config)
-        trainer.to(self.base_config.device)
-
         dataset_loader = DatasetLoader(config=self.base_config)
         testloader = dataset_loader.load_test_set()
-
+        
+        trainer = ModelTrainer(CNNClassifier(), self.base_config)        
         trainer.set_parameters(parameters)
 
         loss, accuracy = trainer.test(testloader)
