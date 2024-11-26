@@ -3,16 +3,12 @@ from flwr.server import ServerAppComponents, ServerConfig
 from flwr.server.strategy import Strategy
 from app.nets.model import CNNClassifier
 from app.nets.train import ModelTrainer
-from app.server.bft_basic_strategy import BFTBasicFedAvg
 from app.server.server_evaluation import ServerEvaluation
 from app.server.bft_strategy import BFTFedAvg
 
 class ServerManager:
     """Manages the configuration and creation of the Server."""
 
-    # TODO: Add better server and strategy configs
-    # https://github.com/adap/flower/blob/main/examples/advanced-pytorch/pytorch_example/server_app.py
-    
     def __init__(self, context: Context):
         self.context = context
         self.trainer = ModelTrainer(CNNClassifier())
@@ -27,9 +23,6 @@ class ServerManager:
         # Ensuring total number of clients satisfy the condition 𝑁 > 3𝑓
         min_clients = max(min_clients, 3 * byzantine_clients + 1)
         # TODO: Pass this server config
-        
-        # Add client eval
-        # https://flower.ai/docs/framework/explanation-federated-evaluation.html
         
         strategy = BFTFedAvg(
             trainer=self.trainer,

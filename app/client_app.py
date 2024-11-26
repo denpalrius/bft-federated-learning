@@ -54,6 +54,10 @@ def client_fn(context: Context):
 # is_malicious
 
 
+# Add client eval
+# https://flower.ai/docs/framework/explanation-federated-evaluation.html
+
+
 # Flower ClientApp
 app = ClientApp(
     client_fn,
