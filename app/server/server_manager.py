@@ -1,7 +1,7 @@
 from flwr.common import Context, ndarrays_to_parameters
 from flwr.server import ServerAppComponents, ServerConfig
 from flwr.server.strategy import FedAvg
-from bft_flower_app.task import Net, get_weights
+from app.task import Net, get_weights
 
 
 class ServerManager:
@@ -9,8 +9,9 @@ class ServerManager:
 
     def __init__(self, context: Context):
         self.context = context
-
-    def get_strategy(self):
+        
+    def create_strategy(self):
+        # TODO: Use BFT strategy
         fraction_fit = self.context.run_config["fraction-fit"]
         ndarrays = get_weights(Net())
         parameters = ndarrays_to_parameters(ndarrays)
@@ -24,12 +25,11 @@ class ServerManager:
         return strategy
 
     def get_config(self):
-        """Define and return the server configuration."""
         num_rounds = self.context.run_config["num-server-rounds"]
         return ServerConfig(num_rounds=num_rounds)
 
     def create_components(self):
-        """Create and return the server app components."""
-        strategy = self.get_strategy()
+        strategy = self.create_strategy()
         config = self.get_config()
         return ServerAppComponents(strategy=strategy, config=config)
+    
