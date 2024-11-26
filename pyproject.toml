@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "bft-federated"
 version = "1.0.0"
-description = ""
+description = "Federated Learning with Byzantine Fault Tolerance (BFT)"
 license = "Apache-2.0"
 dependencies = [
     "flwr[simulation]>=1.12.0",
@@ -21,16 +21,23 @@ packages = ["."]
 publisher = "muticia"
 
 [tool.flwr.app.components]
-serverapp = "bft_federated.server_app:app"
-clientapp = "bft_federated.client_app:app"
+serverapp = "app.server_app:app"
+clientapp = "app.client_app:app"
+
+[tool.flwr.federations]
+default = "local-simulation"
 
 [tool.flwr.app.config]
 num-server-rounds = 3
 fraction-fit = 0.5
 local-epochs = 1
 
-[tool.flwr.federations]
-default = "local-simulation"
-
 [tool.flwr.federations.local-simulation]
 options.num-supernodes = 10
+# options.num-nodes = 10
+# options.num-clients = 10
+# # options.num-rounds = 10
+# options.num-epochs = 10
+# options.batch-size = 32
+# options.lr = 0.01
+# options.seed = 42

@@ -58,19 +58,11 @@ class BFTSimulator:
 
         return clients
 
-    def create_strategy(self) -> Strategy:
-        """Create BFT aggregation strategy."""
-        return BFTFedAvg(
-            threshold=self.base_config.threshold,
-            bft_method=self.sim_config.bft_method,
-        )
-
     def run(self) -> dict:
         print(f"\nRunning simulation with BFT method: {self.sim_config.bft_method}")
 
         client_datasets = self.prepare_data()
         clients = self.create_clients(client_datasets)
-        strategy = self.create_strategy()
 
         def client_fn() -> List[fl.client.Client]:
             return clients
@@ -78,16 +70,16 @@ class BFTSimulator:
             
         print(f'Simulation config: {self.sim_config}')
         
-        results = fl.simulation.start_simulation(
-            client_fn=client_fn,
-            num_clients=self.sim_config.num_clients,
-            strategy=strategy,
-        )
+        # results = fl.simulation.start_simulation(
+        #     client_fn=client_fn,
+        #     num_clients=self.sim_config.num_clients,
+        #     strategy=strategy,
+        # )
 
-        return {
-            "accuracy": results.get("accuracy", 0.0),
-            "loss": results.get("loss", 0.0),
-        }
+        # return {
+        #     "accuracy": results.get("accuracy", 0.0),
+        #     "loss": results.get("loss", 0.0),
+        # }
 
 
 

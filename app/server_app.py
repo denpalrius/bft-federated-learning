@@ -1,9 +1,9 @@
-"""bft-federated: A Flower / PyTorch app."""
+"""bft-flower-app: A Flower / PyTorch app."""
 
 from flwr.common import Context, ndarrays_to_parameters
 from flwr.server import ServerApp, ServerAppComponents, ServerConfig
 from flwr.server.strategy import FedAvg
-from bft_federated.task import Net, get_weights
+from bft_flower_app.task import Net, get_weights
 
 
 def server_fn(context: Context):

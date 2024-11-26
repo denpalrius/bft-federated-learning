@@ -1,10 +1,10 @@
-"""bft-federated: A Flower / PyTorch app."""
+"""bft-flower-app: A Flower / PyTorch app."""
 
 import torch
 
 from flwr.client import ClientApp, NumPyClient
 from flwr.common import Context
-from bft_federated.task import Net, get_weights, load_data, set_weights, test, train
+from bft_flower_app.task import Net, get_weights, load_data, set_weights, test, train
 
 
 # Define Flower Client and client_fn

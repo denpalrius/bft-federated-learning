@@ -9,7 +9,7 @@ from utils.base_config import BaseConfig
 
 class ModelTrainer:
     def __init__(self, model: nn.Module, device: torch.device):
-        self.device = device
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = model.to(device)
 
     def get_parameters(self) -> List[np.ndarray]:
