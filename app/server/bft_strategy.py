@@ -65,6 +65,10 @@ class BFTFedAvg(FedAvg):
         )
         self.logger = logging.getLogger(__name__)
 
+        self.logger.info("BFTFedAvg strategy initialized")
+        self.logger.info(f"Byzantine Threshold: {byzantine_threshold}")
+        self.logger.info(f"Max Deviation Threshold: {max_deviation_threshold}")
+
         # Initialize path to save results and models
         self.save_path = Path("results")
         self.save_path.mkdir(parents=True, exist_ok=True)
@@ -183,12 +187,10 @@ class BFTFedAvg(FedAvg):
             }
 
             # Save results to the filesystem
-            self._store_results(server_round, metrics)
+            self._store_results(server_round, {"a":metrics, "b":self.performance_logs}, prefix="aggregation")
 
             # Save model checkpoint if best accuracy is achieved
-            self._save_best_model_or_checkpoint(
-                server_round, 0.0, aggregated_parameters
-            )
+            self._save_model_checkpoint(aggregated_parameters, server_round)
 
             # Log performance details
             self.logger.info(f"Round {server_round} Aggregation Summary:")
@@ -250,13 +252,13 @@ class BFTFedAvg(FedAvg):
 
         return updates[selected_index][0]
 
-    def _store_results(self, round: int, metrics: Dict[str, Scalar]):
+    def _store_results(self, round: int, metrics: Dict[str, Scalar], prefix=""):
         """Store results in a JSON file"""
         results = {"round": round, "metrics": metrics}
 
         # Generate a timestamp-based filename to avoid overwriting
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        file_name = f"results_{timestamp}.json"
+        file_name = f"results_{prefix}_{timestamp}.json"
         file_path = os.path.join(self.save_path, file_name)
 
         # Ensure the save_path directory exists
@@ -276,8 +278,9 @@ class BFTFedAvg(FedAvg):
 
             # Convert FL parameters to PyTorch model weights
             ndarrays = parameters_to_ndarrays(parameters)
+
+            self.trainer.update_weights(ndarrays)
             model = self.trainer.get_model()
-            self.trainer.update_weights(model, ndarrays)
 
             model_path = self._generate_checkpoint_path(
                 round, accuracy, prefix="model_state"
@@ -303,22 +306,6 @@ class BFTFedAvg(FedAvg):
             torch.save(parameters, model_path)
             self.logger.info(f"Model checkpoint saved at {model_path}")
 
-    def _print_performance_summary(self):
-        """
-        Print comprehensive performance summary of Byzantine detection
-        """
-        print("\n--- Byzantine Fault Tolerance Performance Summary ---")
-        print(f"Total Rounds: {len(self.performance_logs['rounds'])}")
-        print(
-            f"Average Clients per Round: {np.mean(self.performance_logs['total_clients']):.2f}"
-        )
-        print(
-            f"Total Suspected Byzantine Clients: {sum(self.performance_logs['suspected_byzantine_clients'])}"
-        )
-        print(
-            f"Total Anomalies Detected: {len(self.performance_logs['detected_anomalies'])}"
-        )
-
     def _generate_checkpoint_path(
         self, round: int, accuracy: float, prefix: str = "model_checkpoint"
     ) -> str:
@@ -340,6 +327,7 @@ class BFTFedAvg(FedAvg):
                     "centralized_accuracy": centralized_accuracy,
                     **metrics,
                 },
+                prefix="centralized",
             )
 
             self._print_performance_summary()
@@ -364,6 +352,7 @@ class BFTFedAvg(FedAvg):
                     "federated_accuracy": federated_accuracy,
                     **metrics,
                 },
+                prefix="federated",
             )
 
             self._print_performance_summary()
@@ -374,3 +363,19 @@ class BFTFedAvg(FedAvg):
                 f"Error in aggregate_evaluate at round {server_round}: {str(e)}"
             )
             raise
+
+    def _print_performance_summary(self):
+        """
+        Print comprehensive performance summary of Byzantine detection
+        """
+        self.logger.info("\n--- Byzantine Fault Tolerance Performance Summary ---")
+        self.logger.info(f"Total Rounds: {len(self.performance_logs['rounds'])}")
+        self.logger.info(
+            f"Average Clients per Round: {np.mean(self.performance_logs['total_clients']):.2f}"
+        )
+        self.logger.info(
+            f"Total Suspected Byzantine Clients: {sum(self.performance_logs['suspected_byzantine_clients'])}"
+        )
+        self.logger.info(
+            f"Total Anomalies Detected: {len(self.performance_logs['detected_anomalies'])}"
+        )

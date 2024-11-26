@@ -13,6 +13,4 @@ data/**
 
 # Experiment runs and results
 tst/**
-federated/results/**
-federated_bft/results/**
-
+**/results/**

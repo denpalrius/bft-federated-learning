@@ -34,14 +34,15 @@ fraction-fit = 1               # Ensure at least f+1 clients participate in each
 local-epochs = 2                # Epochs for local model training
 
 # BFT Configuration 
-byzantine_threshold = 0.7                 # Higher threshold for stronger aggregation consensus
-max_deviation_threshold = "krum"             # BFT method to handle Byzantine clients during aggregation. Options: "krum", "trimmed_mean", "median"
+byzantine-threshold = 0.7                 # Higher threshold for stronger aggregation consensus
+max-deviation-threshold = 2             # Maximum deviation allowed for BFT
 byzantine-clients = 5           # Number of malicious clients to simulate (ensure N > 3f is still satisfied)
 min-clients = 16                # Minimum number of clients for BFT simulation
+
 [tool.flwr.federations.local-simulation]
-options.num-supernodes = 100     # Sufficient supernodes to handle aggregation in BFT scenarios
-options.num-nodes = 100          # Total number of nodes must satisfy N > 3f for BFT (with f = 5 Byzantine clients, N = 16+)
-options.num-clients = 100        # Ensure enough clients for a robust BFT simulation, satisfying N > 3f
+options.num-supernodes = 50     # Sufficient supernodes to handle aggregation in BFT scenarios
+options.num-nodes = 50          # Total number of nodes must satisfy N > 3f for BFT (with f = 5 Byzantine clients, N = 16+)
+options.num-clients = 50        # Ensure enough clients for a robust BFT simulation, satisfying N > 3f
 options.num-epochs = 10         # Number of epochs for local training
 options.batch-size = 32         # Batch size for training
 options.lr = 0.01               # Learning rate for local updates
