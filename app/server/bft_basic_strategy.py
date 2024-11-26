@@ -12,7 +12,7 @@ from flwr.server.strategy import FedAvg
 from flwr.server.strategy.aggregate import aggregate_krum, aggregate_median
 
 
-class BasicBFTFedAvg(FedAvg):
+class BFTBasicFedAvg(FedAvg):
     """Byzantine Fault Tolerant Federated Averaging Strategy."""
 
     def __init__(

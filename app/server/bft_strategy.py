@@ -277,7 +277,7 @@ class BFTFedAvg(FedAvg):
             # Convert FL parameters to PyTorch model weights
             ndarrays = parameters_to_ndarrays(parameters)
             model = self.trainer.get_model()
-            self.trainer.set_weights(model, ndarrays)
+            self.trainer.update_weights(model, ndarrays)
 
             model_path = self._generate_checkpoint_path(
                 round, accuracy, prefix="model_state"
