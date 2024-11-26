@@ -4,22 +4,29 @@ from torch.utils.data import DataLoader
 from typing import List
 import numpy as np
 from collections import OrderedDict
-from utils.base_config import BaseConfig
+from flwr.common import ndarrays_to_parameters
 
 
 class ModelTrainer:
-    def __init__(self, model: nn.Module, device: torch.device):
+    def __init__(self, model: nn.Module):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model = model.to(device)
+        self.model = model.to(self.device)
 
-    def get_parameters(self) -> List[np.ndarray]:
+    def get_model(self) -> nn.Module:
+        return self.model
+
+    def get_weights(self) -> List[np.ndarray]:
         return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
+    
+    def get_model_parameters(self) -> List[np.ndarray]:
+        ndarrays = self.get_weights()
+        return ndarrays_to_parameters(ndarrays)
 
-    def set_parameters(self, parameters: List[np.ndarray]):
+    def set_weights(self, parameters: List[np.ndarray]):
         params_dict = zip(self.model.state_dict().keys(), parameters)
         state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
         self.model.load_state_dict(state_dict, strict=True)
-
+    
     def train(self, trainloader: DataLoader, epochs: int):
         print(f"\nTraining model on {self.device}...")
 

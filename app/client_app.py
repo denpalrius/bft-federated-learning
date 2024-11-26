@@ -49,6 +49,11 @@ def client_fn(context: Context):
     return FlowerClient(net, trainloader, valloader, local_epochs).to_client()
 
 
+# TODO: Ensure the simulation does not start if it cannot instatiate with accurate BFT clients
+# num_byzantine
+# is_malicious
+
+
 # Flower ClientApp
 app = ClientApp(
     client_fn,
