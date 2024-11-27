@@ -32,12 +32,17 @@ default = "local-simulation"
 num-server-rounds = 5           # For better model convergence consider more server rounds
 fraction-fit = 1               # Ensure at least f+1 clients participate in each round for BFT
 local-epochs = 2                # Epochs for local model training
+batch-size = 32                 # Batch size for local training
 
 # BFT Configuration 
 byzantine-threshold = 0.7                 # Higher threshold for stronger aggregation consensus
 max-deviation-threshold = 2             # Maximum deviation allowed for BFT
 byzantine-clients = 5           # Number of malicious clients to simulate (ensure N > 3f is still satisfied)
+byzantine-attack-strategy = "sign_flip"         # Type of Byzantine clients to simulate
+randomize-byzantine-strategy = true # Randomize Byzantine the Byzantine attack strategy
+byzantine-attack-intensity = 1.0  # Intensity of Byzantine attack
 min-clients = 16                # Minimum number of clients for BFT simulation
+num-partitions= 16               # Number of partitions for BFT simulation
 
 [tool.flwr.federations.local-simulation]
 options.num-supernodes = 50     # Sufficient supernodes to handle aggregation in BFT scenarios

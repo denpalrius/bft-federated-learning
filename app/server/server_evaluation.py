@@ -1,31 +1,32 @@
 import torch
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
-from flwr.common import Context
+from flwr.common.typing import UserConfig
 from app.nets.train import ModelTrainer
 from app.utils.dataset_loader import CIFAR10DatasetLoader
 
+from app.utils.logger import setup_logger
 
 class ServerEvaluation:
     """Handles centralized evaluation for the federated server."""
 
-    def __init__(self, trainer: ModelTrainer, context: Context):
+    def __init__(self, trainer: ModelTrainer, run_config: UserConfig):
+        self.logger = setup_logger(self.__class__.__name__)
+
         self.trainer = trainer
-        self.context = context
+        self.run_config = run_config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.dataset_loader = CIFAR10DatasetLoader()
+        
+        self.num_partitions = run_config.get("num-partitions")
+        self.batch_size = run_config.get("batch-size")
+        
+        self.dataset_loader = CIFAR10DatasetLoader(num_partitions=self.num_partitions, batch_size=self.batch_size)
+        self.dataset_loader.initialize_fds()
+        
         self.global_test_set = self.dataset_loader.load_test_data()
+
 
     def gen_evaluate_fn(self):
         """Generate the centralized evaluation function."""
-
         def evaluate(server_round, parameters_ndarrays, config):
-            """Evaluate the global model on the centralized CIFAR-10 test set."""
-
-            # model = self.trainer.get_model()
-            # model.to(self.device)
-
             self.trainer.update_weights(parameters_ndarrays)
             loss, accuracy = self.trainer.test(self.global_test_set, self.device)
 

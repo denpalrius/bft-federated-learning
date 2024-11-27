@@ -5,14 +5,17 @@ from app.nets.model import CNNClassifier
 from app.nets.train import ModelTrainer
 from app.server.server_evaluation import ServerEvaluation
 from app.server.bft_strategy import BFTFedAvg
+from app.utils.logger import setup_logger
 
 class ServerManager:
     """Manages the configuration and creation of the Server."""
 
     def __init__(self, context: Context):
+        self.logger = setup_logger(self.__class__.__name__)
+
         self.context = context
         self.trainer = ModelTrainer(CNNClassifier())
-        self.evaluator = ServerEvaluation(self.trainer, context)
+        self.evaluator = ServerEvaluation(self.trainer, context.run_config)
 
     def create_strategy(self) -> Strategy:
         byzantine_threshold = float(self.context.run_config.get("byzantine-threshold", 0.7))
@@ -24,6 +27,7 @@ class ServerManager:
         min_clients = max(min_clients, 3 * byzantine_clients + 1)
         # TODO: Pass this server config
         
+        # TODO: Pass better intitial weights
         strategy = BFTFedAvg(
             trainer=self.trainer,
             byzantine_threshold = byzantine_threshold,

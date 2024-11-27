@@ -1,5 +1,3 @@
-""" ServerApp for Flower """
-
 from flwr.server import ServerApp
 from flwr.server import ServerApp
 from app.server.server_manager import ServerManager

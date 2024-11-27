@@ -5,7 +5,6 @@ import torch
 from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 import time
-import logging
 from pathlib import Path
 
 from flwr.common import (
@@ -18,6 +17,7 @@ from flwr.common import (
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy import FedAvg
 from app.nets.train import ModelTrainer
+from app.utils.logger import setup_logger
 
 
 class BFTFedAvg(FedAvg):
@@ -36,7 +36,7 @@ class BFTFedAvg(FedAvg):
         self,
         *args,
         trainer: ModelTrainer,
-        byzantine_threshold: float = 0.5,
+        byzantine_threshold: float = 0.7,
         max_deviation_threshold: float = 2.0,
         **kwargs,
     ):
@@ -47,6 +47,8 @@ class BFTFedAvg(FedAvg):
         :param max_deviation_threshold: Maximum allowed standard deviation for update detection
         """
         super().__init__(*args, **kwargs)
+        self.logger = setup_logger(self.__class__.__name__)
+
         self.trainer = trainer
         self.byzantine_threshold = byzantine_threshold
         self.max_deviation_threshold = max_deviation_threshold
@@ -59,11 +61,6 @@ class BFTFedAvg(FedAvg):
             "aggregation_times": [],
             "detected_anomalies": [],
         }
-
-        logging.basicConfig(
-            level=logging.INFO, format="%(asctime)s - %(levelname)s: %(message)s"
-        )
-        self.logger = logging.getLogger(__name__)
 
         self.logger.info("BFTFedAvg strategy initialized")
         self.logger.info(f"Byzantine Threshold: {byzantine_threshold}")
@@ -136,16 +133,17 @@ class BFTFedAvg(FedAvg):
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
         """
-        Aggregate training results using Krum method with advanced fault detection
+        Aggregate training results using Krum method with fault detection.
 
-        :param server_round: Current server round
-        :param results: Client training results
-        :param failures: Failed client results
-        :return: Aggregated parameters and metrics
+        :param server_round: Current server round.
+        :param results: Client training results.
+        :param failures: Failed client results.
+        :return: Aggregated parameters and metrics.
         """
         start_time = time.time()
 
         if not results:
+            self.logger.warning(f"No results received for round {server_round}.")
             return None, {}
 
         # Convert results to list of weights and sample sizes
@@ -170,35 +168,32 @@ class BFTFedAvg(FedAvg):
             # Convert aggregated weights to Parameters
             aggregated_parameters = ndarrays_to_parameters(aggregated_weights)
 
-            # Track performance metrics
+            # Record metrics and logs in a single structure
             end_time = time.time()
-            self.performance_logs["rounds"].append(server_round)
-            self.performance_logs["total_clients"].append(len(results))
-            self.performance_logs["suspected_byzantine_clients"].append(
-                len(suspicious_indices)
-            )
-            self.performance_logs["aggregation_times"].append(end_time - start_time)
+            aggregation_time = end_time - start_time
 
-            metrics = {
+            aggregation_summary = {
                 "round": server_round,
                 "total_clients": len(results),
                 "suspicious_clients": len(suspicious_indices),
-                "aggregation_time": end_time - start_time,
+                "aggregation_time": aggregation_time,
+                "failures": len(failures),
             }
 
+            self.performance_logs.append(aggregation_summary)
+
             # Save results to the filesystem
-            self._store_results(server_round, {"a":metrics, "b":self.performance_logs}, prefix="aggregation")
+            self._store_results(server_round, aggregation_summary, prefix="aggregation")
 
             # Save model checkpoint if best accuracy is achieved
             self._save_model_checkpoint(aggregated_parameters, server_round)
 
-            # Log performance details
+            # Log aggregation summary
             self.logger.info(f"Round {server_round} Aggregation Summary:")
-            self.logger.info(f"Total Clients: {len(results)}")
-            self.logger.info(f"Suspicious Clients: {len(suspicious_indices)}")
-            self.logger.info(f"Aggregation Time: {end_time - start_time:.4f} seconds")
+            for key, value in aggregation_summary.items():
+                self.logger.info(f"{key.capitalize()}: {value}")
 
-            return aggregated_parameters, metrics
+            return aggregated_parameters, aggregation_summary
 
         except Exception as e:
             self.logger.error(f"Aggregation failed in round {server_round}: {e}")
@@ -260,8 +255,6 @@ class BFTFedAvg(FedAvg):
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         file_name = f"results_{prefix}_{timestamp}.json"
         file_path = os.path.join(self.save_path, file_name)
-
-        # Ensure the save_path directory exists
         os.makedirs(self.save_path, exist_ok=True)
 
         # Write the results to the JSON file
@@ -286,7 +279,6 @@ class BFTFedAvg(FedAvg):
                 round, accuracy, prefix="model_state"
             )
 
-            # Ensure the save directory exists
             os.makedirs(self.save_path, exist_ok=True)
 
             # Save the model state_dict
@@ -368,7 +360,7 @@ class BFTFedAvg(FedAvg):
         """
         Print comprehensive performance summary of Byzantine detection
         """
-        self.logger.info("\n--- Byzantine Fault Tolerance Performance Summary ---")
+        self.logger.info("--- Byzantine Fault Tolerance Performance Summary ---")
         self.logger.info(f"Total Rounds: {len(self.performance_logs['rounds'])}")
         self.logger.info(
             f"Average Clients per Round: {np.mean(self.performance_logs['total_clients']):.2f}"

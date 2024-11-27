@@ -5,10 +5,13 @@ from typing import List
 import numpy as np
 from collections import OrderedDict
 from flwr.common import ndarrays_to_parameters
+from app.utils.logger import setup_logger
 
 
 class ModelTrainer:
     def __init__(self, model: nn.Module):
+        self.logger = setup_logger(self.__class__.__name__)
+
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = model.to(self.device)
 
@@ -28,7 +31,7 @@ class ModelTrainer:
         self.model.load_state_dict(state_dict, strict=True)
 
     def train(self, trainloader: DataLoader, epochs: int, device: torch.device):
-        print(f"\nTraining model on {device}...")
+        self.logger.info(f"Training model on {device}...")
         self.model.to(device)
 
         # TODO: Check use of validation loader
@@ -41,14 +44,11 @@ class ModelTrainer:
         for epoch in range(epochs):
             correct, total, epoch_loss = 0, 0, 0.0
             for batch in trainloader:
-                images = batch["img"]
-                labels = batch["label"]
-
-                # images, labels = batch  # Unpack the tuple
-                # images, labels = images.to(self.device), labels.to(self.device)
-
+                images = batch["img"].to(device)
+                labels = batch["label"].to(device)
+                
                 optimizer.zero_grad()
-                outputs = self.model(images.to(device), labels.to(device))
+                outputs = self.model(images.to(device))
 
                 loss = criterion(outputs, labels)
                 loss.backward()
@@ -62,17 +62,17 @@ class ModelTrainer:
 
             epoch_loss /= len(trainloader)
             epoch_acc = correct / total
-            print(
+            self.logger.info(
                 f"Epoch {epoch + 1}: train loss {epoch_loss:.4f}, accuracy {epoch_acc:.4f}"
             )
 
-        print("Training complete")
+        self.logger.info("Training complete")
 
         avg_train_loss = running_loss / len(trainloader)
         return avg_train_loss
 
     def test(self, testloader: DataLoader, device: torch.device):
-        print("\nEvaluating the model on the test set")
+        self.logger.info("Evaluating the model on the test set")
         self.model.to(device)
 
         criterion = nn.CrossEntropyLoss()
@@ -81,11 +81,8 @@ class ModelTrainer:
 
         with torch.no_grad():
             for batch in testloader:
-                images, labels = batch  # Unpack the tuple
-                images, labels = images.to(self.device), labels.to(self.device)
-
-                # images = batch["img"].to(device)
-                # labels = batch["label"].to(device)
+                images = batch["img"].to(device)
+                labels = batch["label"].to(device)
 
                 outputs = self.model(images)
                 loss += criterion(outputs, labels).item()
@@ -96,6 +93,6 @@ class ModelTrainer:
 
         loss /= len(testloader)
         accuracy = correct / total
-        print(f"Test loss: {loss:.4f}, accuracy: {accuracy:.4f}")
+        self.logger.info(f"Test loss: {loss:.4f}, accuracy: {accuracy:.4f}")
 
         return loss, accuracy
