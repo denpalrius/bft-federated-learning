@@ -1,9 +1,11 @@
+import os
 import torch
 import numpy as np
 from typing import Dict, Any
 from flwr.client import Client
 from flwr.common import Context
 from app.client.federated_client import FederatedClient
+from app.nets.cifar10_cnn import CIFAR10Model
 from app.nets.model import CNNClassifier
 from app.nets.train import ModelTrainer
 from app.utils.dataset_loader import CIFAR10DatasetLoader
@@ -17,11 +19,23 @@ class ClientManager:
     Byzantine Fault Tolerance (BFT) support.
     """
 
-    def __init__(self, context: Context = None):
+    def __init__(self, context: Context):
         self.logger = setup_logger(self.__class__.__name__)
-
-        self.trainer = ModelTrainer(CNNClassifier())
+        
         self.run_config = context.run_config
+        self.node_config = context.node_config
+    
+        # print("=========Run Config=========")
+        # print(self.run_config)
+        
+        # print("=========Node Config=========")
+        # print(self.node_config)
+    
+        pretrained_model_path = self.run_config.get("pretrained-model-path", None)
+        pretrained_model_path = os.path.join(os.getcwd(), pretrained_model_path)
+        self.trainer = ModelTrainer(CIFAR10Model(), pretrained_model_path)
+
+        self.num_epochs = self.run_config.get("local-epochs", 3)
 
         attack_strategy = self.run_config.get("byzantine-attack-strategy", "sign_flip")
         self.attack_strategy = ByzantineStrategy[attack_strategy.upper()]
@@ -50,21 +64,25 @@ class ClientManager:
         self.logger.info(f"Malicious indices: {self.malicious_indices}")
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.batch_size = self.run_config.get("batch-size")
 
-        # TODO: Get partition ID from the client count
-        self.partition_id = self.run_config.get("partition-id", 0)
-        self.batch_size = self.run_config.get("batch-size", 32)
-        self.num_partitions = self.run_config.get("num-partitions", 10)
+        self.partition_id = self.node_config.get("partition-id")
+        self.num_partitions = self.node_config.get("num-partitions")
+        
+        # Log partition
+        self.logger.info('===============================')
+        self.logger.info(f"Partition {self.partition_id}/{self.num_partitions} loaded")
+        self.logger.info('===============================')
+
 
         self.dataset_loader = CIFAR10DatasetLoader(
             num_partitions=self.num_partitions, batch_size=self.batch_size
         )
-        self.dataset_loader.initialize_fds()
 
         self.trainloader, self.valloader = self.dataset_loader.load_data_partition(
             self.partition_id
         )
-        
+
         # Metrics tracking
         self.client_metrics = {
             "total_rounds": 0,
@@ -83,13 +101,13 @@ class ClientManager:
             trainer=self.trainer,
             trainloader=self.trainloader,
             valloader=self.valloader,
+            num_epochs=self.num_epochs,
             attack_type=attack_type,
             attack_intensity=self.attack_intensity,
         )
 
         # Wrap the client with a hook for logging metrics
         return self._wrap_client_with_metrics(client).to_client()
-
 
     def _wrap_client_with_metrics(self, client: Client) -> Client:
         original_fit = client.fit
@@ -114,10 +132,8 @@ class ClientManager:
 
     def log_client_metrics(self, metrics: Dict[str, Any]):
         self.client_metrics["total_rounds"] += 1
-        
-        self.logger.info(
-            f"Client {self.partition_id} metrics: {metrics}"
-        )
+
+        self.logger.info(f"Client {self.partition_id} metrics: {metrics}")
 
         if "train_loss" in metrics:
             self.client_metrics["train_losses"].append(metrics["train_loss"])

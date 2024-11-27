@@ -17,14 +17,16 @@ class FederatedClient(NumPyClient):
         trainer: ModelTrainer,
         trainloader: DataLoader,
         valloader: DataLoader,
-        attack_type: str = None,  # No attack by default
-        attack_intensity: float = 1.0
+        num_epochs: int,
+        attack_type: str = None,
+        attack_intensity: float = 1.0,
     ):
         self.logger = setup_logger(self.__class__.__name__)
 
         self.partition_id = partition_id
         self.trainer = trainer
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.num_epochs = num_epochs
 
         self.trainloader = trainloader
         self.valloader = valloader
@@ -50,12 +52,14 @@ class FederatedClient(NumPyClient):
         self.logger.info(f"[Client {self.partition_id}] fit, config: {config}")
 
         self.trainer.update_weights(parameters)
-        self.trainer.train(self.trainloader, epochs=2, device=self.device)
+        self.trainer.train(self.trainloader, epochs=self.num_epochs, device=self.device)
 
         updated_parameters = self.trainer.get_weights()
 
         if self.attack:
-            self.logger.info(f"[Malicious Client {self.partition_id}] applying poison attack")
+            self.logger.info(
+                f"[Malicious Client {self.partition_id}] applying poison attack"
+            )
             updated_parameters = self.attack.poison_parameters(parameters)
 
         return (

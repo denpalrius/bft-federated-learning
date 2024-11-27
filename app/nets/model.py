@@ -13,7 +13,6 @@ class CNNClassifier(nn.Module):
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
         
-        # TODO: Optimise model for CIFAR10 dataset
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.pool(F.relu(self.conv1(x)))

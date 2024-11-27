@@ -13,6 +13,9 @@
 pip install -e .
 ```
 
+## Loading initial weights
+Run the notebook to build some initial weights
+
 ## Run with the Simulation Engine
 
 At the root of the repository code, use `flwr run` to run a local simulation:
