@@ -2,9 +2,7 @@ import os
 from flwr.common import Context, ndarrays_to_parameters
 from flwr.server import ServerAppComponents, ServerConfig
 from flwr.server.strategy import Strategy
-import torch
-from app.nets.cifar10_cnn import CIFAR10Model
-from app.nets.model import CNNClassifier
+from app.nets.cnn_classifier import CNNClassifier
 from app.nets.train import ModelTrainer
 from app.server.server_evaluation import ServerEvaluation
 from app.server.bft_strategy import BFTFedAvg
@@ -18,11 +16,13 @@ class ServerManager:
 
         self.context = context
         
-        pretrained_model_path = context.run_config.get("pretrained-model-path", None)
+        pretrained_model_path = context.run_config.get("pretrained-model-path")
         pretrained_model_path = os.path.join(os.getcwd(), pretrained_model_path)
+        
+        batch_size = context.run_config.get("batch-size")
 
-        self.trainer = ModelTrainer(CIFAR10Model(), pretrained_model_path)
-        self.evaluator = ServerEvaluation(self.trainer, context.run_config)
+        self.trainer = ModelTrainer(CNNClassifier(), pretrained_model_path)
+        self.evaluator = ServerEvaluation(self.trainer, batch_size)
 
     def create_strategy(self) -> Strategy:
         fraction_fit = self.context.run_config.get("fraction-fit", 0.7)
@@ -30,12 +30,7 @@ class ServerManager:
         byzantine_threshold = float(self.context.run_config.get("byzantine-threshold", 0.7))
         max_deviation_threshold = float(self.context.run_config.get("max-deviation-threshold", 0.7))
         
-        # byzantine_clients = self.context.run_config.get("byzantine-clients", 5)
-        # min_clients = self.context.run_config.get("min-clients", 16)
-
-        # # Ensuring total number of clients satisfy the condition 𝑁 > 3𝑓
-        # min_clients = max(min_clients, 3 * byzantine_clients + 1)
-        # TODO: Pass this server config
+        byzantine_clients = self.context.run_config.get("byzantine-clients", 0)
         
         strategy = BFTFedAvg(
             trainer=self.trainer,
@@ -44,6 +39,7 @@ class ServerManager:
             evaluate_fn=self.evaluator.gen_evaluate_fn(),
             evaluate_metrics_aggregation_fn=self.evaluator.weighted_average,
             fraction_fit=fraction_fit,
+            byzantine_clients=byzantine_clients
         )
 
         return strategy

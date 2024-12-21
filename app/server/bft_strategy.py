@@ -38,6 +38,7 @@ class BFTFedAvg(FedAvg):
         trainer: ModelTrainer,
         byzantine_threshold: float = 0.7,
         max_deviation_threshold: float = 2.0,
+        byzantine_clients = 0,
         **kwargs,
     ):
         """
@@ -358,9 +359,9 @@ class BFTFedAvg(FedAvg):
 
     def _print_performance_summary(self):
         """
-        Print comprehensive performance summary of Byzantine detection
+        Print a comprehensive summary of the performance logs
         """
-        self.logger.info("--- Byzantine Fault Tolerance Performance Summary ---")
+        self.logger.info("========== Aggregate results from federated evaluation ==========")
         self.logger.info(f"Total Rounds: {len(self.performance_logs['rounds'])}")
         self.logger.info(
             f"Average Clients per Round: {np.mean(self.performance_logs['total_clients']):.2f}"

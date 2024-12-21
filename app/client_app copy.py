@@ -1,4 +1,5 @@
 from flwr.client import ClientApp
+
 from app.client.client_manager import ClientManager
 from app.utils.wandb_mod import get_wandb_mod
 
@@ -11,9 +12,9 @@ def client_fn(context):
 def create_client_app():
     return ClientApp(
         client_fn=client_fn,
-        # mods=[
-        #     get_wandb_mod(name="bft-federated-learning"),
-        # ],
+        mods=[
+            get_wandb_mod("W&Bs Mod"),
+        ],
     )
 
 

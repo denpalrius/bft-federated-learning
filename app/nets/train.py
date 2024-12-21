@@ -20,7 +20,7 @@ class ModelTrainer:
         # Load initial parameters (weights) when the model is initialized
         initial_weights = self.load_initial_parameters(pretrained_weight_path)
         self.update_weights(initial_weights)
-
+            
     def get_model(self) -> nn.Module:
         return self.model
 
@@ -43,9 +43,9 @@ class ModelTrainer:
         state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
         self.model.load_state_dict(state_dict, strict=True)
 
-    def train(self, trainloader: DataLoader, epochs: int, device: torch.device):
-        self.logger.info(f"Training model on {device}...")
-        self.model.to(device)
+    def train(self, trainloader: DataLoader, epochs: int):
+        # self.logger.info(f"Training model on {device}...")
+        self.model.to(self.device)
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(self.model.parameters())
@@ -55,11 +55,11 @@ class ModelTrainer:
         for epoch in range(epochs):
             correct, total, epoch_loss = 0, 0, 0.0
             for batch in trainloader:
-                images = batch["img"].to(device)
-                labels = batch["label"].to(device)
+                images = batch["img"].to(self.device)
+                labels = batch["label"].to(self.device)
 
                 optimizer.zero_grad()
-                outputs = self.model(images.to(device))
+                outputs = self.model(images.to(self.device))
 
                 loss = criterion(outputs, labels)
                 loss.backward()
@@ -74,14 +74,14 @@ class ModelTrainer:
             epoch_acc = correct / total
             self.logger.info(f"Epoch {epoch + 1}: train loss {epoch_loss:.4f}, accuracy {epoch_acc:.4f}")
 
-        self.logger.info("Training complete")
+        # self.logger.info("Training complete")
 
         avg_train_loss = running_loss / len(trainloader)
         return avg_train_loss
 
-    def test(self, testloader: DataLoader, device: torch.device):
-        self.logger.info("Evaluating the model on the test set")
-        self.model.to(device)
+    def test(self, testloader: DataLoader):
+        # self.logger.info("Evaluating the model on the test set")
+        self.model.to(self.device)
 
         criterion = nn.CrossEntropyLoss()
         correct, total, loss = 0, 0, 0.0
@@ -89,8 +89,8 @@ class ModelTrainer:
 
         with torch.no_grad():
             for batch in testloader:
-                images = batch["img"].to(device)
-                labels = batch["label"].to(device)
+                images = batch["img"].to(self.device)
+                labels = batch["label"].to(self.device)
 
                 outputs = self.model(images)
                 loss += criterion(outputs, labels).item()
@@ -110,13 +110,13 @@ class ModelTrainer:
 
         if not os.path.exists(weight_path):
             self.logger.error(f"Weight file not found at {weight_path}. Initializing random weights.")
-            return self.get_model_parameters()  # Return random weights
+            return self.get_model_parameters()
 
         try:
             self.model.load_state_dict(torch.load(weight_path, map_location="cpu"))
-            self.logger.info("Pretrained weights loaded successfully")
+            # self.logger.info("Pretrained weights loaded successfully")
         except Exception as e:
             self.logger.error(f"Error loading weights: {e}. Initializing random weights.")
-            return self.get_model_parameters()  # Return random weights
+            return self.get_model_parameters()
 
-        return self.get_model_parameters()  # Return loaded parameters
+        return self.get_model_parameters()

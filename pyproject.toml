@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "bft-federated"
+name = "bft-federated-learning"
 version = "1.0.0"
 description = "Federated Learning with Byzantine Fault Tolerance (BFT)"
 license = "Apache-2.0"
@@ -13,6 +13,9 @@ dependencies = [
     "torch==2.2.1",
     "torchvision==0.17.1",
     "wandb==0.18.7",
+    "matplotlib",
+    "numpy",
+    "pandas",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -29,28 +32,27 @@ clientapp = "app.client_app:app"
 default = "local-simulation"
 
 [tool.flwr.app.config]
-num-server-rounds = 5           # For better model convergence consider more server rounds
-fraction-fit = 0.7               # Ensure at least f+1 clients participate in each round for BFT
-local-epochs = 5                # Epochs for local model training
+num-server-rounds = 2   #$$$$   # 5 rounds of federated learning
+fraction-fit = 0.7               # Ensure at least 70% of clients participate in each round for bft simulation
+local-epochs = 2       #$$$$    # 5 epochs for local training
 batch-size = 32                 # Batch size for local training
-pretrained-model-path = "results/model/cifar10_model_weights.pth"
+pretrained-model-path = "results/model/cifar10_cnn_model_weights.pth"
+
 
 # BFT Configuration 
 byzantine-threshold = 0.7                 # Higher threshold for stronger aggregation consensus
 max-deviation-threshold = 2             # Maximum deviation allowed for BFT
-byzantine-clients = 5           # Number of malicious clients to simulate (ensure N > 3f is still satisfied)
+byzantine-clients = 0        #$$$$      # Number of malicious clients to simulate (Ensure N > 3f)
 byzantine-attack-strategy = "sign_flip"         # Type of Byzantine clients to simulate
 randomize-byzantine-strategy = true # Randomize Byzantine the Byzantine attack strategy
 byzantine-attack-intensity = 1.0  # Intensity of Byzantine attack
-min-clients = 16                # Minimum number of clients for BFT simulation
-num-partitions= 10               
 
 [tool.flwr.federations.local-simulation]
-options.num-supernodes = 50     # Sufficient supernodes to handle aggregation in BFT scenarios
-options.num-nodes = 50          # Total number of nodes must satisfy N > 3f for BFT (with f = 5 Byzantine clients, N = 16+)
-options.num-clients = 50        # Ensure enough clients for a robust BFT simulation, satisfying N > 3f
-options.num-epochs = 10         # Number of epochs for local training
-options.batch-size = 32         # Batch size for training
-options.lr = 0.01               # Learning rate for local updates
+options.num-supernodes = 5     # Sufficient supernodes to handle aggregation in BFT scenarios
+# options.num-nodes = 50          # Total number of nodes must satisfy N > 3f for BFT (with f = 5 Byzantine clients, N = 16+)
+# options.num-clients = 50        # Ensure enough clients for a robust BFT simulation, satisfying N > 3f
+# options.num-epochs = 10         # Number of epochs for local training
+# options.batch-size = 32         # Batch size for training
+# options.lr = 0.001               # Learning rate for local updates
 options.seed = 42               # Seed for reproducibility
 

@@ -17,7 +17,7 @@ class FederatedClient(NumPyClient):
         trainer: ModelTrainer,
         trainloader: DataLoader,
         valloader: DataLoader,
-        num_epochs: int,
+        local_epochs: int,
         attack_type: str = None,
         attack_intensity: float = 1.0,
     ):
@@ -25,8 +25,7 @@ class FederatedClient(NumPyClient):
 
         self.partition_id = partition_id
         self.trainer = trainer
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.num_epochs = num_epochs
+        self.local_epochs = local_epochs
 
         self.trainloader = trainloader
         self.valloader = valloader
@@ -42,17 +41,34 @@ class FederatedClient(NumPyClient):
             self.attack = None
 
     def get_parameters(self, config: Dict) -> List[np.ndarray]:
-        self.logger.info(f"[Client {self.partition_id}] get_weights")
+        # self.logger.info(f"[Client {self.partition_id}] get_weights")
         return self.trainer.get_weights()
 
-    def fit(
+    def fit(self, parameters, config):
+        self.trainer.update_weights(parameters)
+        train_loss = self.trainer.train(
+            self.trainloader,
+            self.local_epochs        )
+        return (
+            self.trainer.get_weights(),
+            len(self.trainloader.dataset),
+            {"train_loss": train_loss},
+        )
+
+    def evaluate(self, parameters, config):
+        self.trainer.update_weights(parameters)
+        loss, accuracy = self.trainer.test(self.valloader)
+        return loss, len(self.valloader.dataset), {"accuracy": accuracy}
+
+
+    def fit2(
         self, parameters: List[np.ndarray], config: Dict
     ) -> Tuple[List[np.ndarray], int, Dict]:
         """Train the model and return (poisoned) parameters."""
         self.logger.info(f"[Client {self.partition_id}] fit, config: {config}")
 
         self.trainer.update_weights(parameters)
-        self.trainer.train(self.trainloader, epochs=self.num_epochs, device=self.device)
+        results = self.trainer.train(self.trainloader, epochs=self.num_epochs)
 
         updated_parameters = self.trainer.get_weights()
 
@@ -65,20 +81,23 @@ class FederatedClient(NumPyClient):
         return (
             updated_parameters,
             len(self.trainloader),
+            results,
             {"is_malicious": self.attack is not None},
         )
 
-    def evaluate(
-        self, parameters: List[np.ndarray], config: Dict
-    ) -> Tuple[float, int, Dict]:
-        """Evaluate the model and return metrics."""
-        self.logger.info(f"[Client {self.partition_id}] evaluate, config: {config}")
+    # def evaluate(
+    #     self, parameters: List[np.ndarray], config: Dict
+    # ) -> Tuple[float, int, Dict]:
+    #     """Evaluate the model and return metrics."""
+    #     self.logger.info(f"[Client {self.partition_id}] evaluate, config: {config}")
 
-        self.trainer.update_weights(parameters)
-        loss, accuracy = self.trainer.test(self.valloader, self.device)
+    #     # TODO: What if poison attack is applied to evaluation?
+    #     self.trainer.update_weights(parameters)
+    #     loss, accuracy = self.trainer.test(self.valloader)
 
-        return (
-            float(loss),
-            len(self.valloader),
-            {"accuracy": float(accuracy), "is_malicious": self.attack is not None},
-        )
+    #     return (
+    #         float(loss),
+    #         len(self.valloader),
+    #         {"accuracy": float(accuracy), "is_malicious": self.attack is not None},
+    #     )
+    #     return loss, len(testloader.dataset), {"accuracy": accuracy}

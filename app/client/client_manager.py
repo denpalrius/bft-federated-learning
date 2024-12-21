@@ -5,10 +5,9 @@ from typing import Dict, Any
 from flwr.client import Client
 from flwr.common import Context
 from app.client.federated_client import FederatedClient
-from app.nets.cifar10_cnn import CIFAR10Model
-from app.nets.model import CNNClassifier
+from app.nets.cnn_classifier import CNNClassifier
 from app.nets.train import ModelTrainer
-from app.utils.dataset_loader import CIFAR10DatasetLoader
+from app.utils import dataset_loader
 from app.utils.logger import setup_logger
 from app.client.byzantine_attack import ByzantineStrategy
 
@@ -21,69 +20,77 @@ class ClientManager:
 
     def __init__(self, context: Context):
         self.logger = setup_logger(self.__class__.__name__)
-        
+        self._initialize_context(context)
+        self._initialize_trainer()
+        self._initialize_data_loaders()
+        self.initialize_malicious_client()
+        self._initialize_metrics()
+
+    def _initialize_context(self, context: Context):
+        self.node_id = context.node_id
         self.run_config = context.run_config
         self.node_config = context.node_config
-    
-        # print("=========Run Config=========")
-        # print(self.run_config)
-        
-        # print("=========Node Config=========")
-        # print(self.node_config)
-    
-        pretrained_model_path = self.run_config.get("pretrained-model-path", None)
-        pretrained_model_path = os.path.join(os.getcwd(), pretrained_model_path)
-        self.trainer = ModelTrainer(CIFAR10Model(), pretrained_model_path)
-
-        self.num_epochs = self.run_config.get("local-epochs", 3)
-
-        attack_strategy = self.run_config.get("byzantine-attack-strategy", "sign_flip")
-        self.attack_strategy = ByzantineStrategy[attack_strategy.upper()]
-        self.attack_intensity = float(
-            self.run_config.get("byzantine-attack-intensity", 1.0)
-        )
-
-        randomize_byzantine_strategy = self.run_config.get(
-            "randomize-byzantine-strategy", False
-        )
-        if randomize_byzantine_strategy:
-            attack_strategies = [strategy.name for strategy in ByzantineStrategy]
-            self.attack_strategy = np.random.choice(attack_strategies)
-            self.attack_intensity = np.random.choice([0.1, 0.5, 1.0, 2.0])
-        self.logger.info("Byzantine attack strategy: %s", self.attack_strategy)
-        self.logger.info("Byzantine attack intensity: %s", self.attack_intensity)
-
-        # Ensuring total number of clients satisfy the condition 𝑁 > 3𝑓
-        byzantine_clients = self.run_config.get("byzantine-clients", 5)
-        num_clients = self.run_config.get("num-clients", 16)
-        num_clients = max(num_clients, 3 * byzantine_clients + 1)
-
-        self.malicious_indices = np.random.choice(
-            num_clients, size=byzantine_clients, replace=False
-        )
-        self.logger.info(f"Malicious indices: {self.malicious_indices}")
-
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.batch_size = self.run_config.get("batch-size")
-
         self.partition_id = self.node_config.get("partition-id")
         self.num_partitions = self.node_config.get("num-partitions")
-        
-        # Log partition
-        self.logger.info('===============================')
+
+    def _initialize_trainer(self):
+        pretrained_model_path = self.run_config.get("pretrained-model-path")
+        pretrained_model_path = os.path.join(os.getcwd(), pretrained_model_path)
+        self.trainer = ModelTrainer(CNNClassifier(), pretrained_model_path)
+        self.local_epochs = self.run_config.get("local-epochs")
+
+    def initialize_malicious_client(self):
+        if self.num_partitions is None:
+            raise ValueError(
+                "Number of partitions must be set before initializing malicious clients"
+            )
+
+        byzantine_clients = self.run_config.get("byzantine-clients", 0)
+        if byzantine_clients > 0:
+            # Ensure total number of clients satisfy the condition N > 2f for Krum
+            if self.num_partitions <= 2 * byzantine_clients:
+                raise RuntimeError(
+                    "Number of partitions must be greater than 2 times the number of Byzantine clients for Krum"
+                )
+
+            self.malicious_indices = np.random.choice(
+                self.num_partitions, size=byzantine_clients, replace=False
+            )
+            self.logger.info(f"Malicious indices: {self.malicious_indices}")
+
+            # Initialize attack strategy
+            attack_strategy = self.run_config.get(
+                "byzantine-attack-strategy", "sign_flip"
+            )
+            self.attack_strategy = ByzantineStrategy[attack_strategy.upper()]
+            self.attack_intensity = float(
+                self.run_config.get("byzantine-attack-intensity", 1.0)
+            )
+
+            randomize_byzantine_strategy = self.run_config.get(
+                "randomize-byzantine-strategy", False
+            )
+            if randomize_byzantine_strategy:
+                attack_strategies = [strategy.name for strategy in ByzantineStrategy]
+                self.attack_strategy = np.random.choice(attack_strategies)
+                self.attack_intensity = np.random.choice([0.1, 0.5, 1.0, 2.0])
+
+            self.logger.info("Byzantine attack strategy: %s", self.attack_strategy)
+            self.logger.info("Byzantine attack intensity: %s", self.attack_intensity)
+        else:
+            self.malicious_indices = []
+
+    def _initialize_data_loaders(self):
+        self.logger.info("===============================")
         self.logger.info(f"Partition {self.partition_id}/{self.num_partitions} loaded")
-        self.logger.info('===============================')
+        self.logger.info("===============================")
 
-
-        self.dataset_loader = CIFAR10DatasetLoader(
-            num_partitions=self.num_partitions, batch_size=self.batch_size
+        self.batch_size = self.run_config.get("batch-size")
+        self.trainloader, self.valloader = dataset_loader.load_data_partition(
+            self.num_partitions, self.partition_id, self.batch_size
         )
 
-        self.trainloader, self.valloader = self.dataset_loader.load_data_partition(
-            self.partition_id
-        )
-
-        # Metrics tracking
+    def _initialize_metrics(self):
         self.client_metrics = {
             "total_rounds": 0,
             "train_losses": [],
@@ -92,22 +99,22 @@ class ClientManager:
         }
 
     def create_client(self) -> Client:
-        # Determine if the client is malicious
         is_malicious = self.partition_id in self.malicious_indices
         attack_type = self.attack_strategy if is_malicious else None
+        attack_intensity = self.attack_intensity if self.attack_intensity  else 1.0
 
         client = FederatedClient(
             partition_id=self.partition_id,
             trainer=self.trainer,
             trainloader=self.trainloader,
             valloader=self.valloader,
-            num_epochs=self.num_epochs,
+            local_epochs=self.local_epochs,
             attack_type=attack_type,
-            attack_intensity=self.attack_intensity,
+            attack_intensity=attack_intensity,
         )
 
-        # Wrap the client with a hook for logging metrics
-        return self._wrap_client_with_metrics(client).to_client()
+        return client.to_client()
+        # return self._wrap_client_with_metrics(client).to_client()
 
     def _wrap_client_with_metrics(self, client: Client) -> Client:
         original_fit = client.fit
@@ -116,7 +123,15 @@ class ClientManager:
         def fit_wrapper(*args, **kwargs):
             result = original_fit(*args, **kwargs)
             metrics = result[2]
-            self.log_client_metrics({"train_loss": metrics.get("train_loss", None)})
+
+            print("=========Metrics=========")
+            # print("result: ", result)
+            print("Metrics: ", metrics)
+
+            if isinstance(metrics, dict):
+                self.log_client_metrics({"train_loss": metrics.get("train_loss", None)})
+            else:
+                self.log_client_metrics({"train_loss": metrics})
             return result
 
         def evaluate_wrapper(*args, **kwargs):
@@ -134,12 +149,13 @@ class ClientManager:
         self.client_metrics["total_rounds"] += 1
 
         self.logger.info(f"Client {self.partition_id} metrics: {metrics}")
-
-        if "train_loss" in metrics:
-            self.client_metrics["train_losses"].append(metrics["train_loss"])
-
-        if "accuracy" in metrics:
-            self.client_metrics["eval_accuracies"].append(metrics["accuracy"])
+        if isinstance(metrics, dict):
+            if "train_loss" in metrics:
+                self.client_metrics["train_losses"].append(metrics["train_loss"])
+            if "accuracy" in metrics:
+                self.client_metrics["eval_accuracies"].append(metrics["accuracy"])
+        elif isinstance(metrics, float):
+            self.client_metrics["train_losses"].append(metrics)
 
     def print_client_summary(self):
         print("\n--- Client Performance Summary ---")
